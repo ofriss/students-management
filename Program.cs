@@ -1,0 +1,265 @@
+﻿namespace StudentManagement
+{
+    interface IPerson
+    {
+        void DisplayInformation();
+    }
+
+    class Student : IPerson
+    {
+        protected int id;
+        protected string name;
+        protected int age;
+
+        public Student(int id, string name, int age)
+        {
+            this.id = id;
+            this.name = name;
+            this.age = age;
+        }
+
+        public int GetId() { return id; }
+        public string GetName() { return name; }
+        public int GetAge() { return age; }
+
+        public void SetId(int value) { id = value; }
+        public void SetName(string value) { name = value; }
+        public void SetAge(int value) { age = value; }
+
+        public Tuple<int, string, int> GetStudentInfo()
+        {
+            return new Tuple<int, string, int>(id, name, age);
+        }
+
+        public virtual void DisplayInformation()
+        {
+            Console.WriteLine($"Student #{id}: {name}, Age {age}");
+        }
+    }
+
+    class CollegeStudent : Student
+    {
+        protected string subject;
+        protected int gradeAverage;
+
+        public CollegeStudent(int id, string name, int age, string subject, int gradeAverage) : base(id, name, age)
+        {
+            this.subject = subject;
+            this.gradeAverage = gradeAverage;
+        }
+
+        public string GetSubject() { return subject; }
+        public int GetGradeAverage() { return gradeAverage; }
+
+        public void SetSubject(string value) { subject = value; }
+        public void SetGradeAverage(int value) { gradeAverage = value; }
+
+        public override void DisplayInformation()
+        {
+            Console.WriteLine($"College Student #{id}: Studying {subject} with grade average of {gradeAverage}");
+        }
+    }
+
+    class StudentManager
+    {
+        private List<Student> students;
+        private int currentStudentId;
+
+        public StudentManager()
+        {
+            students = [];
+            currentStudentId = 1;
+        }
+
+        public void AddStudent(Student student)
+        {
+            student.SetId(currentStudentId);
+            currentStudentId++;
+            students.Add(student);
+        }
+
+        public int DisplayStudents()
+        {
+            foreach (var student in students)
+            {
+                student.DisplayInformation();
+            }
+            return students.Count;
+        }
+
+        public bool DisplayStudent(int id)
+        {
+            var student = students.FirstOrDefault(s => s.GetId() == id);
+            if (student == null) return false;
+
+            student.DisplayInformation();
+            return true;
+        }
+
+        public bool UpdateStudent(int id, string name, int age)
+        {
+            var student = students.FirstOrDefault(s => s.GetId() == id);
+            if (student == null) return false;
+
+            student.SetName(name);
+            student.SetAge(age);
+            return true;
+        }
+
+        public bool DeleteStudent(int id)
+        {
+            int studentIndex = students.FindIndex(s => s.GetId() == id);
+            if (studentIndex == -1) return false;
+
+            students.RemoveAt(studentIndex);
+            return true;
+        }
+    }
+
+    class Program
+    {
+        static StudentManager manager = new();
+
+        public static int ShowMenu()
+        {
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("Welcome to the Student Management System.\n");
+                Console.WriteLine("What operation would you want to make?");
+                Console.WriteLine("1) Create Student");
+                Console.WriteLine("2) Display Students");
+                Console.WriteLine("3) Update Student");
+                Console.WriteLine("4) Delete Student");
+                Console.WriteLine("5) Exit");
+
+                try
+                {
+                    int op = int.Parse(Console.ReadLine() ?? "");
+                    if (op >= 1 && op <= 5)
+                        return op;
+                }
+                catch {}
+            } while (true);
+            
+        }
+
+        // Create a student from user input
+        public static void CreateStudent()
+        {
+            Console.Clear();
+
+            try
+            {
+                Console.WriteLine("Do you want to add a regular/college student (r/c)?");
+                char type = Console.ReadKey().KeyChar;
+                
+                if (type != 'r' && type != 'c')
+                    throw new Exception("Invalid student type.");
+                
+                Console.Write("Enter name: ");
+                var name = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(name))
+                    throw new Exception("Name cannot be empty.");
+                
+                Console.Write("Enter age: ");
+                int age = int.Parse(Console.ReadLine() ?? "");
+                if (age <= 0)
+                    throw new Exception("Age cannot be less than 0.");
+                
+                if (type == 'r')
+                {
+                    // id is 0 because manager takes care of automatic id assignment
+                    manager.AddStudent(new Student(0, name, age));
+                }
+                else
+                {
+                    Console.Write("Enter subject: ");
+                    var subject = Console.ReadLine();
+                    if (string.IsNullOrWhiteSpace(subject))
+                        throw new Exception("Subject cannot be empty.");
+
+                    Console.Write("Enter grade average: ");
+                    int gradeAverage = int.Parse(Console.ReadLine() ?? "");
+                    if (gradeAverage <= 0)
+                        throw new Exception("Grade average cannot be less than 0.");
+                    
+                    manager.AddStudent(new CollegeStudent(0, name, age, subject, gradeAverage));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Invalid data.");
+                if (!string.IsNullOrEmpty(ex.Message))
+                    Console.WriteLine(ex.Message);
+            }
+        }
+
+        // Display 1 or all students from user input
+        public static void DisplayStudents()
+        {
+            try
+            {
+                Console.Write("Do you want to display one student (y) or all students (n)? ");
+                char answer = Console.ReadKey().KeyChar;
+
+                if (answer == 'y')
+                {
+                    int id = int.Parse(Console.ReadLine() ?? "");
+                    if (!manager.DisplayStudent(id))
+                        Console.WriteLine($"Student with ID {id} doesn't exist.");
+                }
+                else
+                {
+                    if (manager.DisplayStudents() == 0)
+                        Console.WriteLine("No students in database. Add students!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Invalid data.");
+                if (!string.IsNullOrEmpty(ex.Message))
+                    Console.WriteLine(ex.Message);
+            }
+            
+        }
+
+        // Update 1 student by ID from user input
+        public static void UpdateStudent()
+        {
+            
+        }
+
+        // Delete 1 stduent by ID from user input
+        public static void DeleteStudent()
+        {
+            
+        }
+
+        public static void Main()
+        {
+            while (true)
+            {
+                int op = ShowMenu();
+                
+                switch (op)
+                {
+                    case 1:
+                        CreateStudent();
+                        break;
+                    case 2:
+                        DisplayStudents();
+                        break;
+                    case 3:
+                        UpdateStudent();
+                        break;
+                    case 4:
+                        DeleteStudent();
+                        break;
+                    default:
+                        return;
+                }
+            }
+        }
+    }
+}

@@ -96,6 +96,21 @@
             return true;
         }
 
+        public bool DisplayStudent(string name)
+        {
+            var studentsToDisplay = students.FindAll(s => s.GetName() == name);
+            
+            if (studentsToDisplay.Count == 0)
+                return false;
+
+            foreach (var student in studentsToDisplay)
+            {
+                student.DisplayInformation();
+            }
+
+            return true;
+        }
+
         public bool UpdateStudent(int id, string name, int age)
         {
             var student = students.FirstOrDefault(s => s.GetId() == id);
@@ -135,13 +150,19 @@
 
                 try
                 {
-                    int op = int.Parse(Console.ReadLine() ?? "");
+                    int op = Console.ReadKey().KeyChar - '0';
+                    Console.WriteLine();
                     if (op >= 1 && op <= 5)
                         return op;
+                    else
+                    {
+                        Console.WriteLine("Invalid operation code. Press Enter to try again.");
+                        Console.ReadKey();
+                    }
                 }
-                catch {}
+                catch { }
             } while (true);
-            
+
         }
 
         // Create a student from user input
@@ -153,20 +174,21 @@
             {
                 Console.WriteLine("Do you want to add a regular/college student (r/c)?");
                 char type = Console.ReadKey().KeyChar;
-                
+                Console.WriteLine();
+
                 if (type != 'r' && type != 'c')
                     throw new Exception("Invalid student type.");
-                
+
                 Console.Write("Enter name: ");
                 var name = Console.ReadLine();
                 if (string.IsNullOrWhiteSpace(name))
                     throw new Exception("Name cannot be empty.");
-                
+
                 Console.Write("Enter age: ");
                 int age = int.Parse(Console.ReadLine() ?? "");
                 if (age <= 0)
                     throw new Exception("Age cannot be less than 0.");
-                
+
                 if (type == 'r')
                 {
                     // id is 0 because manager takes care of automatic id assignment
@@ -183,7 +205,7 @@
                     int gradeAverage = int.Parse(Console.ReadLine() ?? "");
                     if (gradeAverage <= 0)
                         throw new Exception("Grade average cannot be less than 0.");
-                    
+
                     manager.AddStudent(new CollegeStudent(0, name, age, subject, gradeAverage));
                 }
             }
@@ -193,6 +215,10 @@
                 if (!string.IsNullOrEmpty(ex.Message))
                     Console.WriteLine(ex.Message);
             }
+
+            Console.WriteLine("Press Enter to continue.");
+            Console.ReadKey();
+
         }
 
         // Display 1 or all students from user input
@@ -200,19 +226,36 @@
         {
             try
             {
-                Console.Write("Do you want to display one student (y) or all students (n)? ");
-                char answer = Console.ReadKey().KeyChar;
+                Console.Clear();
+                Console.WriteLine("What would you want to display?");
+                Console.WriteLine("1) All students");
+                Console.WriteLine("2) A student by ID");
+                Console.WriteLine("3) A student by name");
 
-                if (answer == 'y')
+                int op = Console.ReadKey().KeyChar - '0';
+                Console.WriteLine();
+
+                if (op < 1 || op > 3)
+                    throw new Exception("Invalid operation code.");
+
+                switch (op)
                 {
-                    int id = int.Parse(Console.ReadLine() ?? "");
-                    if (!manager.DisplayStudent(id))
-                        Console.WriteLine($"Student with ID {id} doesn't exist.");
-                }
-                else
-                {
-                    if (manager.DisplayStudents() == 0)
-                        Console.WriteLine("No students in database. Add students!");
+                    case 1:
+                        if (manager.DisplayStudents() == 0)
+                            Console.WriteLine("No students in database. Add students!");
+                        break;
+                    case 2:
+                        int id = int.Parse(Console.ReadLine() ?? "");
+                        if (!manager.DisplayStudent(id))
+                            Console.WriteLine($"Student with ID {id} doesn't exist.");
+                            break;
+                    case 3:
+                        string name = Console.ReadLine() ?? "";
+                        if (string.IsNullOrWhiteSpace(name))
+                            throw new Exception("Student name is invalid.");
+                        if (!manager.DisplayStudent(name))
+                            Console.WriteLine($"Student with name {name} doesn't exist.");
+                        break;
                 }
             }
             catch (Exception ex)
@@ -221,19 +264,21 @@
                 if (!string.IsNullOrEmpty(ex.Message))
                     Console.WriteLine(ex.Message);
             }
-            
+
+            Console.WriteLine("Press Enter to continue.");
+            Console.ReadKey();
         }
 
         // Update 1 student by ID from user input
         public static void UpdateStudent()
         {
-            
+
         }
 
         // Delete 1 stduent by ID from user input
         public static void DeleteStudent()
         {
-            
+
         }
 
         public static void Main()
@@ -241,7 +286,7 @@
             while (true)
             {
                 int op = ShowMenu();
-                
+
                 switch (op)
                 {
                     case 1:

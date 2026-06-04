@@ -35,6 +35,36 @@
         {
             Console.WriteLine($"Student #{id}: {name}, Age {age}");
         }
+
+        public virtual List<string> GetFields()
+        {
+            return ["name", "age"];
+        }
+
+        public virtual bool UpdateFields(Dictionary<string, string> fieldsValues)
+        {
+            try
+            {
+                foreach (var field in fieldsValues.Keys)
+                {
+                    string value = fieldsValues[field];
+                    switch (field)
+                    {
+                        case "name":
+                            SetName(value.ToString()!);
+                            break;
+                        case "age":
+                            SetAge(int.Parse(value));
+                            break;
+                    }
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
     class CollegeStudent : Student
@@ -57,6 +87,40 @@
         public override void DisplayInformation()
         {
             Console.WriteLine($"College Student #{id}: Studying {subject} with grade average of {gradeAverage}");
+        }
+
+        public override List<string> GetFields()
+        {
+            List<string> fields = base.GetFields();
+            fields.AddRange(["subject", "gradeAverage"]);
+            return fields;
+        }
+
+        public override bool UpdateFields(Dictionary<string, string> fieldsValues)
+        {
+            bool result = true;
+            try
+            {
+                foreach (var field in fieldsValues.Keys)
+                {
+                    string value = fieldsValues[field];
+                    switch (field)
+                    {
+                        case "subject":
+                            SetSubject(value.ToString()!);
+                            break;
+                        case "gradeAverage":
+                            SetGradeAverage(int.Parse(value));
+                            break;
+                    }
+                }
+            }
+            catch
+            {
+                result = false;
+            }
+
+            return base.UpdateFields(fieldsValues) && result;
         }
     }
 
@@ -99,7 +163,7 @@
         public bool DisplayStudent(string name)
         {
             var studentsToDisplay = students.FindAll(s => s.GetName() == name);
-            
+
             if (studentsToDisplay.Count == 0)
                 return false;
 
@@ -111,14 +175,11 @@
             return true;
         }
 
-        public bool UpdateStudent(int id, string name, int age)
+        public bool UpdateStudent(int id, Dictionary<string, string> fieldsToChange)
         {
             var student = students.FirstOrDefault(s => s.GetId() == id);
             if (student == null) return false;
-
-            student.SetName(name);
-            student.SetAge(age);
-            return true;
+            return student.UpdateFields(fieldsToChange);
         }
 
         public bool DeleteStudent(int id)
@@ -128,6 +189,16 @@
 
             students.RemoveAt(studentIndex);
             return true;
+        }
+
+        public bool DoesStudentExist(int id)
+        {
+            return students.FindIndex(s => s.GetId() == id) != -1;
+        }
+
+        public Student? GetStudent(int id)
+        {
+            return students.FirstOrDefault(s => s.GetId() == id);
         }
     }
 
@@ -248,7 +319,7 @@
                         int id = int.Parse(Console.ReadLine() ?? "");
                         if (!manager.DisplayStudent(id))
                             Console.WriteLine($"Student with ID {id} doesn't exist.");
-                            break;
+                        break;
                     case 3:
                         string name = Console.ReadLine() ?? "";
                         if (string.IsNullOrWhiteSpace(name))
@@ -272,13 +343,64 @@
         // Update 1 student by ID from user input
         public static void UpdateStudent()
         {
+            try
+            {
+                Console.Clear();
+                Console.Write("Enter ID of student to update: ");
+                int id = int.Parse(Console.ReadLine() ?? "");
+                if (!manager.DoesStudentExist(id))
+                    throw new Exception($"Student with ID {id} doesn't exist.");
 
+                Dictionary<string, string> fieldsToChange = [];
+                var fields = manager.GetStudent(id)!.GetFields();
+                foreach (var field in fields)
+                {
+                    Console.Write($"Enter value for {field} (leave empty to not change): ");
+                    string value = Console.ReadLine() ?? "";
+                    if (string.IsNullOrWhiteSpace(value))
+                        continue;
+                    fieldsToChange[field] = value;
+                }
+                if (!manager.UpdateStudent(id, fieldsToChange))
+                    Console.WriteLine("Update failed. One or more values were invalid.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Invalid data.");
+                if (!string.IsNullOrEmpty(ex.Message))
+                    Console.WriteLine(ex.Message);
+            }
+
+            Console.WriteLine("Press Enter to continue.");
+            Console.ReadKey();
         }
 
         // Delete 1 stduent by ID from user input
         public static void DeleteStudent()
         {
+            try
+            {
+                Console.Clear();
+                Console.Write("Enter student ID to delete: ");
+                int id = int.Parse(Console.ReadLine() ?? "");
+                if (!manager.DeleteStudent(id))
+                {
+                    Console.WriteLine($"Student with ID {id} doesn't exist.");
+                }
+                else
+                {
+                    Console.WriteLine("Student deleted successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Invalid data.");
+                if (!string.IsNullOrEmpty(ex.Message))
+                    Console.WriteLine(ex.Message);
+            }
 
+            Console.WriteLine("Press Enter to continue.");
+            Console.ReadKey();
         }
 
         public static void Main()
